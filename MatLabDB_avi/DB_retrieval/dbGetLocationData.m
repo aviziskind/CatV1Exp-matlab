@@ -2,14 +2,15 @@ function loc_data = dbGetLocationData(idtype, idval)
     
     persistent allLocationData;
 
+%     nStepsEdits = getLocationChanges();
  
-    saveMultipleInstances = 0;
+    saveMultipleInstances = 0;  % a couple places with double tetrodes -- just pick 1
     ii = 1;
 %     allLocationData = [];
     redo = 0;
     
     if isempty(allLocationData) || redo
-        locationsFileName = [CatV1Path 'MatLabDB_avi' filesep 'locationNames.mat'];
+        locationsFileName = [CatV1Path 'MatLabDB_avi\locationNames.mat'];
         if exist(locationsFileName, 'file') && ~redo
             S = load(locationsFileName);
             allLocationData = S.allLocationData;
@@ -27,13 +28,20 @@ function loc_data = dbGetLocationData(idtype, idval)
             allGids = dbGetStimulusGids([], 1); % get location data for all sites.
             
             fieldnames = {'TBL_DATA_FILES.DATAFILE_ID', 'TBL_GROUPS.GROUP_ID', 'TBL_ANIMALS.TXT_LAB_NAME', ...
-                'TBL_ANIMALS.ANIMAL_ID', 'TBL_PENETRATIONS.PENETRATION_ID', 'TBL_LOCATIONS.LOCATION_ID', ...
+                'TBL_ANIMALS.ANIMAL_ID','TBL_PENETRATIONS.PENETRATION_ID', 'TBL_LOCATIONS.LOCATION_ID',  'TBL_LOC_DEPTHS.LOC_DEPTH_ID', ...
                 'TBL_LOCATIONS.TXT_LOCATION_NAME', 'TBL_PENETRATIONS.TXT_PENETRATION_NAME', ...
                 'TBL_ELECTRODE_TYPES.ELECTRODE_TYPE_ID', 'TBL_PENETRATIONS.BRAIN_STRUCT_TYPE_ID', ...
-                'TBL_ELECTRODES.TXT_ELECTRODE_NAME', 'TBL_ELECTRODES.MEM_ELECTRODE_NOTES', ...
+                'TBL_ELECTRODES.TXT_ELECTRODE_NAME', 'TBL_ELECTRODES.ELECTRODE_ID', 'TBL_ELECTRODES.MEM_ELECTRODE_NOTES', ...
+                ...
+                'TBL_PENETRATIONS.BLN_HEMISPHERE_L', 'TBL_PENETRATIONS.BLN_HEMISPHERE_R',  ...
+                'TBL_PENETRATIONS.DBL_AP', 'TBL_PENETRATIONS.DBL_ML', ...
+                'TBL_AP_ML_ZERO.DBL_AP_ZERO', 'TBL_AP_ML_ZERO.DBL_ML_ZERO', 'TBL_LOC_DEPTHS.DBL_DEPTH_MANIP_STEPS', ...
+                ...
                 'TBL_GROUPS.DTM_CREATED', 'TBL_DATA_FILES.DTM_CREATED', 'TBL_PENETRATIONS.DTM_CREATED', ...
-                'TBL_LOCATIONS.DTM_CREATED', 'TBL_AP_ML_ZERO.DTM_CREATED'};
-
+                'TBL_LOCATIONS.DTM_CREATED', 'TBL_AP_ML_ZERO.DTM_CREATED', ...
+                };
+% 'TBL_LOCATION.DBL_LEFT_OPTIC_DISK_X', 'DBL_LEFT_OPTIC_DISK_Y', 'DBL_RIGHT_OPTIC_DISK_X
+            
             T1 = {'TBL_AP_ML_ZERO', 'ELECTRODE_ID', 'TBL_ELECTRODES'};
             T2 = {T1, 'TBL_AP_ML_ZERO', 'AP_ML_ZERO_ID', 'TBL_PENETRATIONS'};               
             T3 = {'TBL_ANIMALS', 'ANIMAL_ID', T2, 'TBL_ELECTRODES'};
@@ -48,19 +56,44 @@ function loc_data = dbGetLocationData(idtype, idval)
                         
 %             criterea = {'TBL_ELECTRODES.ELECTRODE_TYPE_ID', 2};
             criterea = {};
-            
-            [Did_tbl, Gid_tbl, CatName_tbl, AnimalID_tbl, PenetrID_tbl, LocID_tbl, LocName_tbl, PenName_tbl, elect_tbl, brainStruct_tbl, electrode_name_tbl, electrode_notes_tbl, ...
+            tic;
+            [Did_tbl, Gid_tbl, CatName_tbl, AnimalID_tbl, PenetrID_tbl, LocID_tbl, LocDepthID_tbl, LocName_tbl, PenName_tbl, ...
+                electTypeId_tbl, brainStruct_tbl, electrode_name_tbl, electrode_id_tbl, electrode_notes_tbl, ...
+                ...
+                l_hemi_tbl, r_hemi_tbl, ap_tbl, ml_tbl, ap_zero_tbl, ml_zero_tbl, depth_steps_tbl, ...
                 date_grp, date_df, date_pen, date_loc, date_apml] = ...
                 getFieldsFromDatabaseTable(hnd, fieldnames, joinedTables, criterea);
 
-            
+            toc;
+          
             isThomas = cellfun(@(str) ~isempty(strfind(str, 'Thomas')), electrode_notes_tbl);
             isNiCr = cellfun(@(str) ~isempty(strfind(lower(str), 'nic')), electrode_notes_tbl);
             isTungsten12_7 = cellfun(@(str) ~isempty(strfind(str, 'Tungsten 12.7')), electrode_notes_tbl)';
             isTungsten7_6 = cellfun(@(str) ~isempty(strfind(str, 'Tungsten wire, 7.6um')), electrode_notes_tbl)';
             isTungsten25 = cellfun(@(str) ~isempty(strfind(str, 'Tungsten wire, center; 25.4 um')), electrode_notes_tbl)';
-
-            
+%%
+            if 0
+                %%
+                Did_tbl(idx)
+                Gid_tbl(idx),
+                CatName_tbl(idx),
+                AnimalID_tbl(idx), 
+                PenetrID_tbl(idx), 
+                LocID_tbl(idx), 
+                LocName_tbl(idx), 
+                PenName_tbl(idx), ...
+                elect_tbl(idx), 
+                
+                brainStruct_tbl(idx), 
+                electrode_name_tbl(idx), 
+                electrode_notes_tbl(idx), ...
+                ...
+                %%
+                l_hemi_tbl(idx), r_hemi_tbl(idx), 
+                %%
+                ap_tbl(idx), ml_tbl(idx), ap_zero_tbl(idx), ml_zero_tbl(idx), depth_steps_tbl(idx) 
+                
+            end
 
             %%
             electrode_types_tbl = cell(size(electrode_notes_tbl));
@@ -70,7 +103,7 @@ function loc_data = dbGetLocationData(idtype, idval)
             electrode_types_tbl(isTungsten7_6) = {'Tungsten 7.6'};
             electrode_types_tbl(isTungsten25) = {'Tungsten 25'};
             
-            
+            [nStepsEdits_tblCols, nStepsEdits_tbl] = getLocationChanges();
         %%
         
 %             printGidRecords(2500);
@@ -92,16 +125,33 @@ function loc_data = dbGetLocationData(idtype, idval)
                 end
                 
                 idx = find(Gid_tbl == Gid);                
-                
+%                  n_idx(Gid_i) = length(idx);
 %                 l_idx(Gid_i) = length(idx);
                 idx_orig = idx;
+                
                 if length(idx) > 1
-                    idx2 = find(elect_tbl(idx) == 2); % 2 == Tetrode.
-                    if length(idx2) == 1
-                        idx_orig = idx(idx2);
-                        idx = idx(idx2);                        
-                    else
-                        idx = idx(end); % not sure why there are 2 in many cases.... for the purposes of i just picked 1
+                    electrodeTypeIds = electTypeId_tbl(idx);
+                    nTetrodes = nnz(electrodeTypeIds == 2);
+                    idx2 = find(electrodeTypeIds == 2); % 2 == Tetrode.
+                    
+                    if nTetrodes == 0
+                        idx = idx(1);
+                        
+                    elseif nTetrodes == 1
+                        idx = idx(electrodeTypeIds == 2);  % pick the tetrode one
+                                            
+                    elseif nTetrodes == 2
+                        
+% %                         if 
+%                         try
+%                             sd = siteDataFor('Did', Did_tbl(idx(1))); nCh = sd.dataFileInfo.nChannels;
+%                         catch
+%                             nCh = 0;
+%                         end
+%                         fprintf('Gid_i = %d. Gid = %d. Did = %d. (nCh = %d) types = %d/%d, ids = %d/%d. names= %s/%s\n', ...
+%                             Gid_i, Gid_tbl(idx(1)), Did_tbl(idx(1)), nCh, electTypeId_tbl(idx),  electrode_id_tbl(idx), electrode_name_tbl{idx(1)}, electrode_name_tbl{idx(2)});
+
+                        idx = idx(1); % not sure why there are 2 in many cases.... for the purposes of i just picked 1
                     end
                 end
                 
@@ -163,7 +213,7 @@ function loc_data = dbGetLocationData(idtype, idval)
                     case {'M', 'R'}, AnimalType = 'Rat'; 
                     case 'T',        AnimalType = 'Test';
                 end                                
-                brainStruct = switchh(brainStruct_tbl(idx), [1,2,100], {'LGN', 'V1', 'Diode'});
+                brainStruct = switchh(unique(brainStruct_tbl(idx)), [1,2,100], {'LGN', 'V1', 'Diode'});
                 
                 electrode_types = electrode_types_tbl(idx);
 %                 CatId = str2double( strtok(CatName, 'K') );
@@ -221,12 +271,62 @@ function loc_data = dbGetLocationData(idtype, idval)
                 allLocationData(Gid).AnimalId    = unique( AnimalID_tbl(idx_save) );
                 allLocationData(Gid).PenetrId    = unique( PenetrID_tbl(idx_save) );
                 allLocationData(Gid).LocId       = unique( LocID_tbl(idx_save) );
+                allLocationData(Gid).LocDepthId  = unique( LocDepthID_tbl(idx_save) );
                 allLocationData(Gid).CatName     = unique( CatName_tbl(idx_save) );
                 allLocationData(Gid).PenName     = unique( PenName_tbl(idx_save) );
                 allLocationData(Gid).LocName     = unique( LocName_tbl(idx_save) );
                 allLocationData(Gid).Gid         = unique( Gid_tbl(idx_save) );
                 allLocationData(Gid).Did         = unique( Did_tbl(idx_save) );
-                                
+                     
+                isLeft = unique(l_hemi_tbl(idx_save)) ~= 0;
+                isRight = unique(r_hemi_tbl(idx_save)) ~= 0;
+                if (isLeft ~= isRight)
+                    LR_str = iff(isLeft, 'L', 'R');
+                else
+                    LR_str = '?';
+                    isLeft = nan;
+                    isRight = nan;
+                end
+                
+               
+                
+                [nStepsEdits_tblCols, nStepsEdits_tbl] = getLocationChanges();
+                 idx_loc_depth_id = find(strcmp(nStepsEdits_tblCols, 'LocDepthID'),1);
+                idx_location_id = find(strcmp(nStepsEdits_tblCols, 'LocationID'),1);
+                idx_curSteps = find(strcmp(nStepsEdits_tblCols, 'CurrentSTEPS'),1);
+                idx_newSteps = find(strcmp(nStepsEdits_tblCols, 'newSTEPS'),1);
+                
+               
+                depth = depth_steps_tbl(idx_save);
+                 
+                if length(idx_save) == 1
+                    idx_replace = find(  nStepsEdits_tbl(:,idx_loc_depth_id) == LocDepthID_tbl(idx_save) );
+                    if ~isempty(idx_replace)
+                        assert(length(idx_replace) == 1);
+                        assert(nStepsEdits_tbl(idx_replace, idx_location_id) == LocID_tbl(idx_save) );
+                        assert(nStepsEdits_tbl(idx_replace, idx_curSteps) == depth_steps_tbl(idx_save) );
+                        newNSteps = nStepsEdits_tbl(idx_replace, idx_newSteps);
+                        
+                        depth = newNSteps;
+                        
+                    end
+                    
+                end
+                
+               
+                if any(depth == [0, 999, 9999, 2222222])
+                    depth = nan;
+                end
+%                 if 
+                
+            
+                allLocationData(Gid).hemi       = LR_str;
+                allLocationData(Gid).hemiId     = double(isRight);
+                allLocationData(Gid).AP         = unique( ap_tbl(idx_save) );
+                allLocationData(Gid).ML         = unique( ml_tbl(idx_save) );
+                allLocationData(Gid).AP_ZERO    = unique( ap_zero_tbl(idx_save) );
+                allLocationData(Gid).ML_ZERO    = unique( ml_zero_tbl(idx_save) );
+                allLocationData(Gid).depth      = depth;
 
                 allLocationData(Gid).Pen_date  = unique( date_pen(idx_save) );
                 allLocationData(Gid).Loc_date  = unique( date_loc(idx_save) );
@@ -307,4 +407,25 @@ function printGidRecords(Gid)
     end
 3;
 
+end
+
+
+function [nStepsEdits_tblCols, nStepsEdits_tbl] = getLocationChanges()
+    nStepsEdits_tblCols = {'LocDepthID', 'LocationID', 'CurrentSTEPS', 'newSTEPS'};
+    nStepsEdits_tbl = [
+        43  35, -1, 8379
+        492, 453, 0, 13754
+        507, 469, 0, 19375
+        509, 471, 0, 19640
+        511, 473, 19640, 20345
+        513, 475, 0, 20926
+        515, 477, 0, 21602
+        517, 479, 0, 22262
+        519, 481, 0, 23336
+        521, 483, 0, 24000
+        523, 485, 0, 8924
+        525, 487, 0, 9440
+        1004, 944, 0, 1
+        1005, 945, 0, 1];
+    
 end
