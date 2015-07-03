@@ -34,9 +34,10 @@ function generateCellGroupData_DB(typesToDo)
 %     GroupingType = titleCase(groupingType);
             
     if nargin < 1
-%         typesToDo = {'movie', 'grating'};
-        typesToDo = {'movie'};
+        typesToDo = {'movie', 'grating'};
+%         typesToDo = {'movie'};
 %         typesToDo = {'grating'};
+%         typesToDo = {'noise'};
     end
 
     doMovieGroups = any(strcmp(typesToDo, 'movie'));
@@ -121,7 +122,9 @@ function generateCellGroupData_DB(typesToDo)
         LocData = dbGetLocationData('Gid', Gid);
         assert(strcmp(LocData.AnimalType, 'Cat'))
         assert(strcmp(LocData.brainStruct, 'V1'))
-        locationData = struct('CatId', LocData.AnimalId, 'PenId', LocData.PenetrId, 'LocId', LocData.LocId, 'ElectrodeType', LocData.ElectrodeType);
+        locationData = struct('CatId', LocData.AnimalId, 'PenId', LocData.PenetrId, 'LocId', LocData.LocId, 'ElectrodeType', LocData.ElectrodeType, ...
+            'HemiId', LocData.hemiId, 'Hemisphere', LocData.hemi, 'AP', LocData.AP, 'ML', LocData.ML, 'AP_ZERO', LocData.AP_ZERO, 'ML_ZERO', LocData.ML_ZERO, ...
+            'AP_offset', LocData.AP - LocData.AP_ZERO, 'ML_offset', LocData.ML - LocData.ML_ZERO, 'depth', LocData.depth );
         
         [dataFileName, nChannels, samplingRate, expDateTime_str_db] = getFieldsFromDatabaseTable(hnd, {'TXT_DATAFILE_NAME', 'LNG_N_CHANNELS', 'DBL_SAMPLING_RATE_HZ', 'DTM_CREATED'}, 'TBL_DATA_FILES', {'DATAFILE_ID', Did});
         dateStrFormat_db = 'm/dd/yyyy HH:MM:SS PM';
@@ -244,10 +247,6 @@ function generateCellGroupData_DB(typesToDo)
             movieGroups = movieGroups_all(idx_withSiteOK);         %#ok<NASGU>
         end
         
-%         movieGroups_nat
-%         movieGroups_nat = 
-        
-        
         % flashed grating movies:
         fgIdx_withSpikes = arrayfun(@(s) ~isempty(s.cellIds), movieGroups_fg_all);        
         movieGroups_fg_all = movieGroups_fg_all(fgIdx_withSpikes);
@@ -257,18 +256,12 @@ function generateCellGroupData_DB(typesToDo)
         fgIdx_withSiteOK = arrayfun(@(s) strcmp(s.siteOK, 'ok') || strcmp(s.siteOK, 'warning'), movieGroups_fg_all);        
         movieGroups_fg = movieGroups_fg_all( fgIdx_withSiteOK );  %#ok<NASGU>
         
-        natIdx = arrayfun(@(s) strcmp(s.stimType, 'Movie:Natural_Scenes'), movieGroups );        
-        movieGroups_nat = movieGroups(natIdx);
-        
         if ~onlyDoFlashedGratingMovies                   
             save([CatV1Path groupingType 'Groups_movie_all_DB.mat'], 'movieGroups_all', 'movieGroups_fg_all');
             save([CatV1Path groupingType 'Groups_movie_DB.mat'],     'movieGroups');
         end
         save([CatV1Path groupingType 'Groups_movie_fg_all_DB.mat'],  'movieGroups_fg_all');
         save([CatV1Path groupingType 'Groups_movie_fg_DB.mat'],  'movieGroups_fg');
-        
-%         save([CatV1Path groupingType 'Groups_movie_nat_all_DB.mat'],  'movieGroups_nat_all');
-        save([CatV1Path groupingType 'Groups_movie_nat_DB.mat'],  'movieGroups_nat');
         disp('Completed Movie Groups');
     end
     
