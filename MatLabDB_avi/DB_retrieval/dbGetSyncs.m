@@ -3,7 +3,7 @@ function syncs = dbGetSyncs(idType, id, outputType, returnEmpty_flag, dontAmend_
     returnEmptyIfError = exist('returnEmpty_flag', 'var') && ~isempty(returnEmpty_flag);
     dontAmendSyncs = exist('dontAmend_flag', 'var') && ~isempty(dontAmend_flag);
 
-    if isXPS15
+    if ~isOldXPS
         assert(strcmp(idType, 'Gid'))
         syncs = getSyncs(id, outputType);
         return;

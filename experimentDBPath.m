@@ -1,7 +1,10 @@
 function s = experimentDBPath
     if ispc
-        s = 'D:\ExperimentDB\';
-%         s = 'C:\ExperimentDB\';
+        if isXPS15
+            s = 'D:\ExperimentDB\';
+        elseif isOldXPS
+            s = 'C:\ExperimentDB\';
+        end
     else
         if onNYUserver
             s = '~/';

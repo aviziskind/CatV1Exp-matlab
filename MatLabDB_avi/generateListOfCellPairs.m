@@ -489,6 +489,7 @@ function [WccPairs, WcmPairs, BccPairs, BcmPairs, BmmPairs] = generateListOfCell
                 BcmPairs = cellfun(@(x) cast(x, outputClass), BcmPairs, 'un', 0);            
                 BmmPairs = cellfun(@(x) cast(x, outputClass), BmmPairs, 'un', 0);            
             end
+            
         end
     end
     

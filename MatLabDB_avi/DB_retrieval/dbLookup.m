@@ -6,7 +6,7 @@ function toValues = dbLookup(toName,   fromName, fromValues, oneToOneFlag)
         return;
     end
     
-    if isXPS15
+    if ~isOldXPS
         assert(length(fromValues) == 1)
         assert( any( strcmp(fromName, {'Did', 'Gid'}) ) )
         sd = siteDataFor(fromName, fromValues);

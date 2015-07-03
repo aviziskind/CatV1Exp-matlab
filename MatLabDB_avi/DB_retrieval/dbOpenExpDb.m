@@ -1,6 +1,6 @@
 function hnd = dbOpenExpDb
 %     return;
-    if isXPS15
+    if ~isOldXPS
         error('!');
     end
     dbAccount  = 'SYSDBA';
