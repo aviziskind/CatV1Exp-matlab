@@ -15,7 +15,8 @@ function [gparams, rsqr, MID_fit, s] = mid_getCellGaborParams(Gid, cellId, timeW
                 mid_type_i = fn{i};
                 allCellGaborParams_i = orderfields(allCellGaborParams.(mid_type_i));
                 cellGaborParams_file = [CatV1Path 'MatLabDB_avi' filesep mid_type_i '.mat'];
-                save(cellGaborParams_file, 'allCellGaborParams_i', '-v6');                
+                S_tmp.allCellGaborParams = allCellGaborParams_i;
+                save(cellGaborParams_file, '-struct', 'S_tmp', '-v6');                
                 fprintf('[saved %d gabor parameter sets to file %s]\n', length(fieldnames(allCellGaborParams_i)),  mid_type_i );            
             end
             saveCount = 0;
@@ -27,6 +28,7 @@ function [gparams, rsqr, MID_fit, s] = mid_getCellGaborParams(Gid, cellId, timeW
     
     timeWindow_str = getTimeWindowStr(timeWindow);
     responseType_str = getResponseTypeStr(responseType, 1);
+
     trialMode_str = ['__' trialMode];
     mid_type = ['allCellGaborParams' responseType_str timeWindow_str trialMode_str];
     cellGaborParams_file = [CatV1Path 'MatLabDB_avi' filesep mid_type '.mat'];
@@ -86,6 +88,7 @@ function [gparams, rsqr, MID_fit, s] = mid_getCellGaborParams(Gid, cellId, timeW
     
     if ~isfield(allCellGaborParams, mid_type)
         if exist(cellGaborParams_file, 'file') && ~redo_all
+            fprintf('[Loading %s]\n', cellGaborParams_file);
             S_file = load(cellGaborParams_file);
             allCellGaborParams.(mid_type) = S_file.allCellGaborParams;
         else
