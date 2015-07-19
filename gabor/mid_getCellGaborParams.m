@@ -13,11 +13,10 @@ function [gparams, rsqr, MID_fit, s] = mid_getCellGaborParams(Gid, cellId, timeW
             fn = fieldnames(allCellGaborParams);
             for i = 1:length(fn)
                 mid_type_i = fn{i};
-                allCellGaborParams_i = orderfields(allCellGaborParams.(mid_type_i));
+                S_tmp.allCellGaborParams = orderfields(allCellGaborParams.(mid_type_i));                
                 cellGaborParams_file = [CatV1Path 'MatLabDB_avi' filesep mid_type_i '.mat'];
-                S_tmp.allCellGaborParams = allCellGaborParams_i;
                 save(cellGaborParams_file, '-struct', 'S_tmp', '-v6');                
-                fprintf('[saved %d gabor parameter sets to file %s]\n', length(fieldnames(allCellGaborParams_i)),  mid_type_i );            
+                fprintf('[saved %d gabor parameter sets to file %s]\n', length(fieldnames(S_tmp.allCellGaborParams)),  mid_type_i );            
             end
             saveCount = 0;
         end
@@ -146,9 +145,9 @@ function [gparams, rsqr, MID_fit, s] = mid_getCellGaborParams(Gid, cellId, timeW
                     saveCount = saveCount + 1;
 
                     if saveCount >= saveCountSpacing
-                        allCellGaborParams_i = orderfields(allCellGaborParams.(mid_type)); 
-                        save(cellGaborParams_file, 'allCellGaborParams_i', '-v6');        
-                        fprintf('[saved %d gabor parameter sets]\n', length(fieldnames(allCellGaborParams_i)))
+                        S_tmp.allCellGaborParams = orderfields(allCellGaborParams.(mid_type)); 
+                        save(cellGaborParams_file, '-struct', 'S_tmp', '-v6');                
+                        fprintf('[saved %d gabor parameter sets]\n', length(fieldnames(S_tmp.allCellGaborParams)))
                         saveCount = 0;
                     end                
                 end
