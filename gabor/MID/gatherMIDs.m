@@ -13,8 +13,8 @@ function gatherMIDs(idx, allTimeWindows, allTrialModes)
         addMID_jack_fits = 1;
 
 %     timeWindow = curTimeWindow('');
-%     curResponseType('gainCorrected');
-    curResponseType('raw');
+     curResponseType('gainCorrected');
+%    curResponseType('raw');
     if nargin < 2 || isempty(allTimeWindows)
         allTimeWindows = {'best', [29, 62], [58, 91]};
     %    allTimeWindows = {'best'};
@@ -108,6 +108,7 @@ function gatherMIDs(idx, allTimeWindows, allTrialModes)
     %     trialModes = {'all', 'odd', 'even'};
         S = S_init;
         progressBar('init-', nCells);
+        nMIDsFound = 0;
         for ci = 1:nCells
            
             cell_idx = idx(ci);
@@ -129,8 +130,11 @@ function gatherMIDs(idx, allTimeWindows, allTrialModes)
                 
                 mid_fileName = mid_getPreferredMIDfile(Gid, cellId, timeWindow, trialMode, responseType);        
                 if ~exist(mid_fileName, 'file')
+                    fprintf('No MID file %s\n', mid_fileName);
+                    error('!')
                     continue;
                 end
+                nMIDsFound = nMIDsFound + 1;
                 S_mid = load(mid_fileName);        
                 MID = S_mid.MID;
                 v_MID = S_mid.v_MID{1};
@@ -254,27 +258,29 @@ function gatherMIDs(idx, allTimeWindows, allTrialModes)
             progressBar(ci);
         end
         
-       
-        
-        all_mids_filename = ['allMIDs' timeWindow_str '.mat'];
+        fprintf('Found %d MIDs\n', nMIDsFound);
 
-        save([CatV1Path all_mids_filename], '-struct', 'S', '-v6');
+        if nMIDsFound > 0
+        
+            all_mids_filename = ['allMIDs' timeWindow_str '.mat'];
+
+            save([CatV1Path all_mids_filename], '-struct', 'S', '-v6');
             %%
-        mid_types = fieldnames(S); mid_types = mid_types(strncmp(mid_types, 'allMID', 6));
-        for type_i = 1:length(mid_types);
-            nMIDs(type_i) = nnz( arrayfun(@(cell_i) ~isempty(cell_i.MID), S.(mid_types{type_i})) );
-            nMID_fits(type_i) = nnz( arrayfun(@(cell_i) ~isempty(cell_i.gparams), S.(mid_types{type_i}) ) ) ;
-            all_t_calc =      arrayfun(@(cell_i) cell_i.t_calc, S.(mid_types{type_i}), 'un', 0);
-            t_calc(type_i) =  sum([all_t_calc{:}]);
-        end
+            mid_types = fieldnames(S); mid_types = mid_types(strncmp(mid_types, 'allMID', 6));
+            for type_i = 1:length(mid_types);
+                nMIDs(type_i) = nnz( arrayfun(@(cell_i) ~isempty(cell_i.MID), S.(mid_types{type_i})) );
+                nMID_fits(type_i) = nnz( arrayfun(@(cell_i) ~isempty(cell_i.gparams), S.(mid_types{type_i}) ) ) ;
+                all_t_calc =      arrayfun(@(cell_i) cell_i.t_calc, S.(mid_types{type_i}), 'un', 0);
+                t_calc(type_i) =  sum([all_t_calc{:}]);
+            end
 
-        fprintf('Saved the following to file %s : \n', all_mids_filename);
-        for i = 1:length(mid_types)        
-            fprintf('  %s : %d MIDs, %d fits,   [ took %s]\n', mid_types{i}, nMIDs(i), nMID_fits(i), sec2hms(t_calc(i)) );
-        end
-        fprintf('Total time for calculation: %s \n', sec2hms( sum(t_calc) ));
-        fprintf('Total time for calculation (divided by 8): %s \n', sec2hms( sum(t_calc)/8 ));
-        
+            fprintf('Saved the following to file %s : \n', all_mids_filename);
+            for i = 1:length(mid_types)        
+                fprintf('  %s : %d MIDs, %d fits,   [ took %s]\n', mid_types{i}, nMIDs(i), nMID_fits(i), sec2hms(t_calc(i)) );
+            end
+            fprintf('Total time for calculation: %s \n', sec2hms( sum(t_calc) ));
+            fprintf('Total time for calculation (divided by 8): %s \n', sec2hms( sum(t_calc)/8 ));
+        end        
         
     end
    
