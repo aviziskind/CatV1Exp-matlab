@@ -43,7 +43,7 @@ function [timeWindow_out, timeWindow_str_out] = curTimeWindow(tw)
             end
         end
         timeWindow_out = timeWindow;
-        timeWindow_str_out = iff(isnumeric(timeWindow), sprintf('__%d_%d', timeWindow), iff(strcmp(timeWindow, 'best'), '', ['__' timeWindow] ));
+        timeWindow_str_out = getTimeWindowStr(timeWindow); 
                 
         if (nargin==1) && isempty(tw)
             timeWindow_out = timeWindow_str_out;

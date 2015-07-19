@@ -1,8 +1,35 @@
 function [gparams, rsqr, MID_fit, s] = mid_getCellGaborParams(Gid, cellId, timeWindow, trialMode, responseType, jackknifeIdx, data_input, calcMID_fit_arg)
 
     persistent allCellGaborParams saveCount 
+%     persistent allCellGaborParams_all
+    if isempty(allCellGaborParams)
+        allCellGaborParams = struct;
+    end
+
+    if strcmp(Gid, 'save')
+        %%
+        if ~isempty(saveCount) && saveCount > 0
+            %%
+            fn = fieldnames(allCellGaborParams);
+            for i = 1:length(fn)
+                mid_type_i = fn{i};
+                allCellGaborParams_i = orderfields(allCellGaborParams.(mid_type_i));
+                cellGaborParams_file = [CatV1Path 'MatLabDB_avi' filesep mid_type_i '.mat'];
+                save(cellGaborParams_file, 'allCellGaborParams_i', '-v6');                
+                fprintf('[saved %d gabor parameter sets to file %s]\n', length(fieldnames(allCellGaborParams_i)),  mid_type_i );            
+            end
+            saveCount = 0;
+        end
+        %%
+        return;
+    end    
     
-    cellGaborParams_file = [CatV1Path 'MatLabDB_avi' filesep 'allCellGaborParams.mat'];
+    
+    timeWindow_str = getTimeWindowStr(timeWindow);
+    responseType_str = getResponseTypeStr(responseType, 1);
+    mid_type = ['allCellGaborParams' responseType_str timeWindow_str ];
+    cellGaborParams_file = [CatV1Path 'MatLabDB_avi' filesep mid_type '.mat'];
+%     cellGaborParams_file_all = [CatV1Path 'MatLabDB_avi' filesep 'allCellGaborParams_all.mat'];
         
     redo_all = 0;
     redo_current = 0;
@@ -13,31 +40,25 @@ function [gparams, rsqr, MID_fit, s] = mid_getCellGaborParams(Gid, cellId, timeW
     returnEmptyIfDontHaveData = 0;
     
     if strcmp(Gid, 'fix')
-        if isempty(allCellGaborParams)
-            S_file = load(cellGaborParams_file);
-            allCellGaborParams = S_file.allCellGaborParams;
-        end
+        S_file = load(cellGaborParams_file);
+        allCellGaborParams = S_file.allCellGaborParams;
         fld_names = fieldnames(allCellGaborParams);
         for i = 1:length(fld_names)
-            [Gid, cellId, timeWindow, trialMode, responseType, jackIdx] = parseFieldName(fld_names{i}, 1);
-            [gparams, rsqr] = mid_getCellGaborParams(Gid, cellId, timeWindow, trialMode, responseType, jackIdx);            
+%             [Gid, cellId, timeWindow, trialMode, responseType, jackIdx] = parseFieldName(fld_names{i}, 1);
+            s = allCellGaborParams.(fld_names{i});
+%             s.x_range = [s.xs(1), s.xs(end), length(s.xs)];
+%             s.y_range = [s.ys(1), s.ys(end), length(s.ys)];
+%             s = rmfield(s, 'xs');
+%             s = rmfield(s, 'ys');
+%             allCellGaborParams.(fld_names{i}) = s;
+%             [gparams, rsqr] = mid_getCellGaborParams(Gid, cellId, timeWindow, trialMode, responseType, jackIdx);            
+            
         end        
         saveCount = 1;
         mid_getCellGaborParams('save');        
     end
     
-    if strcmp(Gid, 'save')
-        %%
-        if ~isempty(saveCount) && saveCount > 0
-            %%
-            fprintf('[saved %d gabor parameter sets]\n', length(fieldnames(allCellGaborParams)))
-            allCellGaborParams = orderfields(allCellGaborParams);
-            save(cellGaborParams_file, 'allCellGaborParams', '-v6');                
-            saveCount = 0;
-        end
-        %%
-        return;
-    elseif any(strcmp(Gid, {'used', 'all'}))
+    if any(strcmp(Gid, {'used', 'all'}))
         if strcmp(Gid, 'used')
             S = load('usedCells.mat');
             Gids = S.usedGids;
@@ -59,33 +80,43 @@ function [gparams, rsqr, MID_fit, s] = mid_getCellGaborParams(Gid, cellId, timeW
     end
 
     
-    if isempty(allCellGaborParams)        
+    
+    
+    if ~isfield(allCellGaborParams, mid_type)
         if exist(cellGaborParams_file, 'file') && ~redo_all
             S_file = load(cellGaborParams_file);
-            allCellGaborParams = S_file.allCellGaborParams;
+            allCellGaborParams.(mid_type) = S_file.allCellGaborParams;
         else
-            allCellGaborParams = struct;
+            allCellGaborParams.(mid_type) = struct;    
         end        
+        
         saveCount = 0;        
     end
+    
+%     if isempty(allCellGaborParams_all)
+%         S_file_all = load(cellGaborParams_file_all);
+%         allCellGaborParams_all = S_file_all.allCellGaborParams;
+%     end
+
+    
     
     cell_fld_name = getGaborParamsFieldName(Gid, cellId, timeWindow, trialMode, responseType, jackknifeIdx, 1);    
     
     if ~haveInputs    
         redo_now = 0;
-        if isfield(allCellGaborParams, cell_fld_name)
-            s = allCellGaborParams.(cell_fld_name);
+        if isfield(allCellGaborParams.(mid_type), cell_fld_name)
+            s = allCellGaborParams.(mid_type).(cell_fld_name);
             if isfield(s, 'MID')
                 MID_fit = getMIDfitToGabor(Gid, s.params);
                 assert(isequal(s.MID_fit, MID_fit));
                 
                 s = rmfield(s, 'MID');
                 s = rmfield(s, 'MID_fit');                
-                allCellGaborParams.(cell_fld_name) = s;
+                allCellGaborParams.(mid_type).(cell_fld_name) = s;
             end            
             if isfield(s, 'all_p_est')
                 s = rmfield(s, 'all_p_est');
-                allCellGaborParams.(cell_fld_name) = s;
+                allCellGaborParams.(mid_type).(cell_fld_name) = s;
             end
             
             mid_fileName = mid_getPreferredMIDfile(Gid, cellId, timeWindow, trialMode, responseType);        
@@ -94,23 +125,30 @@ function [gparams, rsqr, MID_fit, s] = mid_getCellGaborParams(Gid, cellId, timeW
             end
         end
 
-        if (~isfield(allCellGaborParams, cell_fld_name) || redo_current || redo_now)
-            if returnEmptyIfDontHaveData
-                [gparams, rsqr, MID_fit, s] = deal([]);
-                return;
-            else
-                s = calcGaborParameters(Gid, cellId, timeWindow, trialMode, responseType, jackknifeIdx);        
+        if (~isfield(allCellGaborParams.(mid_type), cell_fld_name)   || redo_current || redo_now)
+%             if isfield(allCellGaborParams_all, cell_fld_name)
+%                 allCellGaborParams.(mid_type).(cell_fld_name) = allCellGaborParams_all.(cell_fld_name);
+%                 saveCount = saveCount + 1;
+%             else
+            
+                if returnEmptyIfDontHaveData
+                    [gparams, rsqr, MID_fit, s] = deal([]);
+                    return;
+                else
+                    s = calcGaborParameters(Gid, cellId, timeWindow, trialMode, responseType, jackknifeIdx);        
 
-                allCellGaborParams.(cell_fld_name) = s;
-                saveCount = saveCount + 1;
+                    allCellGaborParams.(mid_type).(cell_fld_name) = s;
+                    saveCount = saveCount + 1;
 
-                if saveCount >= saveCountSpacing
-                    allCellGaborParams = orderfields(allCellGaborParams);
-                    save(cellGaborParams_file, 'allCellGaborParams', '-v6');        
-                    fprintf('[saved %d gabor parameter sets]\n', length(fieldnames(allCellGaborParams)))
-                    saveCount = 0;
-                end                
-            end
+                    if saveCount >= saveCountSpacing
+                        allCellGaborParams_i = orderfields(allCellGaborParams.(mid_type)); 
+                        save(cellGaborParams_file, 'allCellGaborParams_i', '-v6');        
+                        fprintf('[saved %d gabor parameter sets]\n', length(fieldnames(allCellGaborParams_i)))
+                        saveCount = 0;
+                    end                
+                end
+%             end
+            
         end
         
     elseif haveInputs
@@ -119,13 +157,13 @@ function [gparams, rsqr, MID_fit, s] = mid_getCellGaborParams(Gid, cellId, timeW
         rsqr_input = data_input.rsqr;
         
         s = getGaborParamStruct(Gid, cellId, timeWindow, trialMode, responseType, gparams_input, MIDfit_input, rsqr_input);       
-        allCellGaborParams.(cell_fld_name) = s;
+        allCellGaborParams.(mid_type).(cell_fld_name) = s;
         mid_getCellGaborParams('save');
     end
         
         
     if nargout > 0
-        s = allCellGaborParams.(cell_fld_name);
+        s = allCellGaborParams.(mid_type).(cell_fld_name);
         gparams = s.params;
         rsqr = s.rsqr;
         MID_fit = [];
@@ -254,9 +292,9 @@ function [Gid, cellId, timeWindow, trialMode, responseType, jackknifeIdx] = pars
     
     
     jackknifeIdx = [];
-    i_jack = strfind(fld_name, '__jack1');
+    i_jack = strfind(fld_name, '_jack');
     if ~isempty(i_jack)
-        jackknifeIdx = str2double( fld_name(i_jack+6:end) );
+        jackknifeIdx = str2double( fld_name(i_jack+5:end) );
     end
     
     A = sscanf(fld_name, 'GaborParams_Gid_%d__cell%d');
@@ -271,8 +309,8 @@ end
 
 function fld_name = getGaborParamsFieldName(Gid, cellId, timeWindow, trialMode, responseType, jackIdx, chk_flag)
 
-    trialMode_str  = iff( strcmp(trialMode, 'all'),                          '', sprintf('__%s',    trialMode) );
-    timeWindow_str = iff( strcmp(timeWindow, 'best') || isempty(timeWindow), '', sprintf('__%d_%d', timeWindow));
+    trialMode_str  = iff( strcmp(trialMode, 'all'),  '', sprintf('__%s',    trialMode) );
+    timeWindow_str = getTimeWindowStr(timeWindow); % iff( strcmp(timeWindow, 'best') || isempty(timeWindow), '', sprintf('__%d_%d', timeWindow));
     jackIdx_str = iff( ~isempty(jackIdx), sprintf('_jack%d', jackIdx), '');
     responseType_str = iff( strcmp(responseType, 'gainCorrected'), '__GC', '') ;
     

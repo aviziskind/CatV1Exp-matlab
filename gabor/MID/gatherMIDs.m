@@ -14,7 +14,9 @@ function gatherMIDs(idx)
 
 %     timeWindow = curTimeWindow('');
     curResponseType('gainCorrected');
+%     curResponseType('raw');
     allTimeWindows = {'best'};
+%     allTimeWindows = {[29 62]};
 %     allTimeWindows = {'best', [29, 62], [58, 91]};
     allTrialModes = {'all', 'odd', 'even'};
     
@@ -89,7 +91,7 @@ function gatherMIDs(idx)
         
         timeWindow = allTimeWindows{wi};
         fprintf('\n\n ===================================== \n GATHERING ALL MIDS (timewindow = %s)\n =====================================\n\n', num2str(timeWindow));
-        timeWindow_str = iff(strcmp(timeWindow, 'best'), '', sprintf('__%d_%d', timeWindow));           
+        timeWindow_str = getTimeWindowStr(timeWindow);
 %%        
     %     trialModes = {'all', 'odd', 'even'};
         S = S_init;
