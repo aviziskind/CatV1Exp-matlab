@@ -13,8 +13,8 @@ function gatherMIDs(idx, allTimeWindows, allTrialModes)
         addMID_jack_fits = 1;
 
 %     timeWindow = curTimeWindow('');
-%     curResponseType('gainCorrected');
-    curResponseType('raw');
+    curResponseType('gainCorrected');
+%     curResponseType('raw');
     if nargin < 2 || isempty(allTimeWindows)
         allTimeWindows = {'best', [29, 62], [58, 91]};
     %    allTimeWindows = {'best'};
