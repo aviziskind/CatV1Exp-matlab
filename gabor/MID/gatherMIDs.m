@@ -1,4 +1,4 @@
-function gatherMIDs(idx)
+function gatherMIDs(idx, allTimeWindows, allTrialModes)
 
     addFittedGaborStats = 1;
     addSTAs = 0;
@@ -14,9 +14,15 @@ function gatherMIDs(idx)
 
 %     timeWindow = curTimeWindow('');
     curResponseType('gainCorrected');
-    allTimeWindows = {'best'};
+    if nargin < 2 || isempty(allTimeWindows)
+    %    allTimeWindows = {'best'};
 %     allTimeWindows = {'best', [29, 62], [58, 91]};
-    allTrialModes = {'all', 'odd', 'even'};
+        allTimeWindows = {[29, 62]}
+    end
+
+    if nargin < 3 || isempty(allTrialModes)
+        allTrialModes = {'all', 'odd', 'even'};
+    end
     
     nWindows = length(allTimeWindows);
     nTrialModes = length(allTrialModes);
@@ -79,7 +85,7 @@ function gatherMIDs(idx)
     
     
     
-    if nargin < 1
+    if nargin < 1   || isempty(idx)
         idx = 1:nCells;
     end
     
@@ -88,7 +94,11 @@ function gatherMIDs(idx)
     for wi = 1:nWindows
         
         timeWindow = allTimeWindows{wi};
-        fprintf('\n\n ===================================== \n GATHERING ALL MIDS (timewindow = %s)\n =====================================\n\n', num2str(timeWindow));
+        fprintf(['\n\n ===================================== \n ' ...
+                 'GATHERING ALL MIDS (timewindow = %s)\n =====================================\n'], num2str(timeWindow));
+        fprintf(['             responseType = %s. timeWindows = %s.  ' ...
+                 'trialModes    = %s\n\n'], responseType, ...
+                tostring(allTimeWindows), tostring(allTrialModes));
         timeWindow_str = iff(strcmp(timeWindow, 'best'), '', sprintf('__%d_%d', timeWindow));           
 %%        
     %     trialModes = {'all', 'odd', 'even'};

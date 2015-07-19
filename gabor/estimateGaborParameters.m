@@ -110,7 +110,8 @@ function all_p0 = estimateGaborParameters(xs, ys, zs, smoothedAlready_flag)  % x
     
     allExtrPairs_mtx = false(nExtrema, nExtrema);
     extrema_pos = [idx_locExtr_x(:), idx_locExtr_y(:)]';
-    idx_closest = kNearestNeighbors(extrema_pos, k_nearest);
+    idx_closest = kNearestNeighbors_Matlab(extrema_pos, k_nearest);
+    
     for i = 1:nExtrema
         for j = 1:nExtrema
             allExtrPairs_mtx(i,j) = (i == j) || ...  % ie. use this extremum by itself.
