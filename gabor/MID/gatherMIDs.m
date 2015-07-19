@@ -1,4 +1,4 @@
-function gatherMIDs(idx)
+function gatherMIDs(idx, allTimeWindows, allTrialModes)
 
     addFittedGaborStats = 1;
     addSTAs = 0;
@@ -13,12 +13,17 @@ function gatherMIDs(idx)
         addMID_jack_fits = 1;
 
 %     timeWindow = curTimeWindow('');
-    curResponseType('gainCorrected');
-%     curResponseType('raw');
-    allTimeWindows = {'best'};
-%     allTimeWindows = {[29 62]};
-%     allTimeWindows = {'best', [29, 62], [58, 91]};
-    allTrialModes = {'all', 'odd', 'even'};
+%     curResponseType('gainCorrected');
+    curResponseType('raw');
+    if nargin < 2 || isempty(allTimeWindows)
+        allTimeWindows = {'best', [29, 62], [58, 91]};
+    %    allTimeWindows = {'best'};
+%         allTimeWindows = {[29, 62]};
+    end
+
+    if nargin < 3 || isempty(allTrialModes)
+        allTrialModes = {'all', 'odd', 'even'};
+    end
     
     nWindows = length(allTimeWindows);
     nTrialModes = length(allTrialModes);
@@ -81,17 +86,24 @@ function gatherMIDs(idx)
     
     
     
-    if nargin < 1
+    if nargin < 1   || isempty(idx)
         idx = 1:nCells;
     end
     
     S_init = S;
+
+    fprintf('\n\n   ===================================== \n ');
+    fprintf(    '          GATHERING ALL MIDS \n');
+    fprintf(    '          responseType = %s\n', tostring(responseType));
+    fprintf(    '          timeWindows = %s\n', tostring(allTimeWindows));
+    fprintf(    '          trialModes = %s\n', tostring(allTrialModes));
+    fprintf(    '   =====================================\n' );
+    
     
     for wi = 1:nWindows
         
-        timeWindow = allTimeWindows{wi};
-        fprintf('\n\n ===================================== \n GATHERING ALL MIDS (timewindow = %s)\n =====================================\n\n', num2str(timeWindow));
-        timeWindow_str = getTimeWindowStr(timeWindow);
+        timeWindow = allTimeWindows{wi};    
+        timeWindow_str = iff(strcmp(timeWindow, 'best'), '', sprintf('__%d_%d', timeWindow));           
 %%        
     %     trialModes = {'all', 'odd', 'even'};
         S = S_init;

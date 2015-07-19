@@ -27,7 +27,8 @@ function [gparams, rsqr, MID_fit, s] = mid_getCellGaborParams(Gid, cellId, timeW
     
     timeWindow_str = getTimeWindowStr(timeWindow);
     responseType_str = getResponseTypeStr(responseType, 1);
-    mid_type = ['allCellGaborParams' responseType_str timeWindow_str ];
+    trialMode_str = ['_' trialMode];
+    mid_type = ['allCellGaborParams' responseType_str timeWindow_str trialMode_str];
     cellGaborParams_file = [CatV1Path 'MatLabDB_avi' filesep mid_type '.mat'];
 %     cellGaborParams_file_all = [CatV1Path 'MatLabDB_avi' filesep 'allCellGaborParams_all.mat'];
         
