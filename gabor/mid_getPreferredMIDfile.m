@@ -5,6 +5,9 @@ function [mid_fileName, downSampFactor, frameMode] = mid_getPreferredMIDfile(Gid
     if nargin < 4
         trialMode = 'all'; % vs odd/even
     end
+    if nargin < 5
+        responseType = 'raw'; % vs odd/even
+    end
     
     order_preference = {1  '1rep';
                         1, '2rep';                        
