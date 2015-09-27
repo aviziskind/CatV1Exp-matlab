@@ -7,7 +7,7 @@ function s = experimentDBPath
         end
     else
         if onNYUserver
-            s = '~/';
+            s = '/home/ziskind/';
         else
             s = '/media/avi/Storage/ExperimentDB/';
         end

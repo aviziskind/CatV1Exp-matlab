@@ -13,8 +13,8 @@ function gatherMIDs(idx, allTimeWindows, allTrialModes)
         addMID_jack_fits = 1;
 
 %     timeWindow = curTimeWindow('');
-    curResponseType('gainCorrected');
-%     curResponseType('raw');
+%     curResponseType('gainCorrected');
+    curResponseType('raw');
 
     if nargin < 2 || isempty(allTimeWindows)
         allTimeWindows = {'best', [29, 62], [58, 91]};
@@ -132,7 +132,7 @@ function gatherMIDs(idx, allTimeWindows, allTrialModes)
                 mid_fileName = mid_getPreferredMIDfile(Gid, cellId, timeWindow, trialMode, responseType);        
                 if ~exist(mid_fileName, 'file')
                     fprintf('No MID file %s\n', mid_fileName);
-                    error('!')
+%                     error('!')
                     continue;
                 end
                 nMIDsFound = nMIDsFound + 1;

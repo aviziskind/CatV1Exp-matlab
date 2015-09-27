@@ -19,6 +19,10 @@ function [mid_fileName, downSampFactor, frameMode] = mid_getPreferredMIDfile(Gid
         downSampFactor = order_preference{i,1};
         frameMode      = order_preference{i,2};
         [mid_fileName, ~] = getName('MID_file', Gid, cellId, downSampFactor, frameMode, timeWindow, trialMode, responseType );
+        
+        if i == 1 && ~exist(mid_fileName, 'file') && debug
+            fprintf('Could not find MID file : %s\n', mid_fileName);
+        end
         i = i+1;        
     end
     if ~exist(mid_fileName, 'file')
